@@ -1,0 +1,439 @@
+////////////////* Automation #1 *//////////////
+
+//////////////* Temperature Raised Check *//////////
+TopicMsgParamGoal TempRaisedRegionA -> {
+	topic: "garden.temperature";
+	condition: "regionA" > 30;
+}
+
+TopicMsgParamGoal TempRaisedRegionB -> {
+        topic: "garden.temperature";
+        condition: "regionB" > 30;  
+}
+
+TopicMsgParamGoal TempRaisedRegionC -> {
+        topic: "garden.temperature";
+        condition: "regionC" > 30;  
+}
+
+TopicMsgParamGoal TempRaisedRegionD -> {
+        topic: "garden.temperature";
+        condition: "regionD" > 30;  
+}
+
+////////////* Humidity Raised Check *///////////
+TopicMsgParamGoal HumRaisedRegionA -> {
+	topic: "garden.humidity";
+	condition: "regionA" > 0.8;
+}
+
+TopicMsgParamGoal HumRaisedRegionB -> { 
+        topic: "garden.humidity";
+        condition: "regionB" > 0.8;
+}
+
+TopicMsgParamGoal HumRaisedRegionC -> { 
+        topic: "garden.humidity";
+        condition: "regionC" > 0.8;
+}
+
+TopicMsgParamGoal HumRaisedRegionD -> { 
+        topic: "garden.humidity";
+        condition: "regionD" > 0.8;
+}
+
+/////////* Open Each Window *////////
+TopicMsgParamGoal OpenWindowA -> {
+	topic: "garden.regionA.window";
+	condition: "state" == 1;
+}
+
+TopicMsgParamGoal OpenWindowB -> {
+	topic: "garden.regionB.window";
+	condition: "state" == 1;
+}
+
+TopicMsgParamGoal OpenWindowC -> {
+	topic: "garden.regionC.window";
+	condition: "state" == 1;
+}
+TopicMsgParamGoal OpenWindowD -> {
+	topic: "garden.regionD.window";
+	condition: "state" == 1;
+}
+
+/////////////* Close Each Window */////////
+TopicMsgParamGoal CloseWindowA -> {
+	topic: "garden.regionA.window";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal CloseWindowB -> {
+	topic: "garden.regionB.window";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal CloseWindowC -> {
+	topic: "garden.regionC.window";
+	condition: "state" == 0;
+}
+TopicMsgParamGoal CloseWindowD -> {
+	topic: "garden.regionD.window";
+	condition: "state" == 0;
+}
+
+/////////////* Temperature Falled to ideal values (Within 30 minutes) *//////////////
+TopicMsgParamGoal TempFallRegionA -> {
+	topic: "garden.temperature";
+	condition: "regionA" < 25;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+TopicMsgParamGoal TempFallRegionB -> {
+	topic: "garden.temperature";
+	condition: "regionB" < 25;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+TopicMsgParamGoal TempFallRegionC -> {
+	topic: "garden.temperature";
+	condition: "regionC" < 25;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+TopicMsgParamGoal TempFallRegionD -> {
+	topic: "garden.temperature";
+	condition: "regionD" < 25;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+/////////////* Humidity Falls to ideal values (Within 30 minutes) *///////////////////////
+TopicMsgParamGoal HumFallRegionA -> {
+	topic: "garden.humidity";
+	condition: "regionA" < 0.3;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+TopicMsgParamGoal HumFallRegionB -> {
+	topic: "garden.humidity";
+	condition: "regionB" < 0.3;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+TopicMsgParamGoal HumFallRegionC -> {
+	topic: "garden.humidity";
+	condition: "regionC" < 0.3;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+TopicMsgParamGoal HumFallRegionD -> {
+	topic: "garden.humidity";
+	condition: "regionD" < 0.3;
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+//////////* Temperature AND Humidity Falls to ideal values */////////////
+ComplexGoal HumAndTempA -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(TempFallRegionA);
+	addGoal(HumFallRegionA);
+}
+
+ComplexGoal HumAndTempB -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(TempFallRegionB);
+	addGoal(HumFallRegionB);
+}
+
+ComplexGoal HumAndTempC -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(TempFallRegionC);
+	addGoal(HumFallRegionC);
+}
+
+ComplexGoal HumAndTempD -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(TempFallRegionD);
+	addGoal(HumFallRegionD);
+}
+
+///////////////////* Control Temperature or humidity *////////////
+
+ComplexGoal ControlRegionA_Temp->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempRaisedRegionA);
+	addGoal(OpenWindowA);
+	addGoal(HumAndTempA);
+	addGoal(CloseWindowA);
+}
+
+ComplexGoal ControlRegionA_Hum->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumRaisedRegionA);
+	addGoal(OpenWindowA);
+	addGoal(HumAndTempA);
+	addGoal(CloseWindowA);
+}
+
+ComplexGoal ControlRegionA -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(ControlRegionA_Temp);
+	addGoal(ControlRegionA_Hum);
+}
+
+ComplexGoal ControlRegionB_Temp->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempRaisedRegionB);
+	addGoal(OpenWindowB);
+	addGoal(HumAndTempB);
+	addGoal(CloseWindowB);
+}
+
+ComplexGoal ControlRegionB_Hum->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumRaisedRegionB);
+	addGoal(OpenWindowB);
+	addGoal(HumAndTempB);
+	addGoal(CloseWindowB);
+}
+
+ComplexGoal ControlRegionB -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(ControlRegionB_Temp);
+	addGoal(ControlRegionB_Hum);
+}
+
+ComplexGoal ControlRegionC_Temp->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempRaisedRegionC);
+	addGoal(OpenWindowC);
+	addGoal(HumAndTempC);
+	addGoal(CloseWindowC);
+}
+
+ComplexGoal ControlRegionC_Hum->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumRaisedRegionC);
+	addGoal(OpenWindowC);
+	addGoal(HumAndTempC);
+	addGoal(CloseWindowC);
+}
+
+ComplexGoal ControlRegionC -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(ControlRegionC_Temp);
+	addGoal(ControlRegionC_Hum);
+}
+
+ComplexGoal ControlRegionD_Temp->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempRaisedRegionD);
+	addGoal(OpenWindowD);
+	addGoal(HumAndTempD);
+	addGoal(CloseWindowD);
+}
+
+ComplexGoal ControlRegionD_Hum->{
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumRaisedRegionD);
+	addGoal(OpenWindowD);
+	addGoal(HumAndTempD);
+	addGoal(CloseWindowD);
+}
+
+ComplexGoal ControlRegionD -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(ControlRegionD_Temp);
+	addGoal(ControlRegionD_Hum);
+}
+
+////////////////* Raise Quality air *////////////////
+
+/////////////* If some regiion quality air < 0.5 *///////////////
+TopicMsgParamGoal QualitySomeFall -> {
+	topic: "garden.air_quality";
+	condition: (("regionA" < 0.5) OR ("regionB" < 0.5)) OR (("regionC" < 0.5) OR ("regionD" < 0.5));
+}
+
+/////////////* Open All Windows *///////////
+ComplexGoal OpenWindows ->{
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(OpenWindowA);
+	addGoal(OpenWindowB);
+	addGoal(OpenWindowC);
+	addGoal(OpenWindowD);
+}
+
+//////////////* Close All Windows *//////////
+ComplexGoal CloseWindows -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(CloseWindowA);
+	addGoal(CloseWindowB);
+	addGoal(CloseWindowC);
+	addGoal(CloseWindowD);
+}
+
+////////////* Check if all air quality is OK *///////////
+TopicMsgParamGoal QualityAllRaised -> {
+	topic: "garden.air_quality";
+	condition: (("regionA" > 0.8) AND ("regionB" > 0.8)) AND (("regionC" > 0.8) AND ("regionD" > 0.8));
+}
+
+////////////* Quality Air Control */////////////
+ComplexGoal Quality -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(QualitySomeFall);
+	addGoal(OpenWindows);
+	addGoal(QualityAllRaised);
+	addGoal(CloseWindows);
+}
+
+
+////////////////* Automation #2 */////////////////////////
+
+
+/////////* Open the water valve *////////////
+TopicMsgReceivedGoal OpenWater -> {
+	topic: "garden.robotic_arm.water_value.open";
+}
+
+////////* Close the water valve *////////////
+TopicMsgReceivedGoal CloseWater -> {
+	topic: "garden.robotic_arm.water_value.close";
+}
+
+////////* Mix Organics *//////////
+TopicMsgReceivedGoal MixOrganics -> {
+	topic: "garden.robotic_arm.mix_organics";
+}
+
+///////////* Move Robotic arm *///////////////////
+
+CrossStraightLineGoal RoboticRoute1 -> {
+	startPoint: Point2D(0.0, 0.0);
+	endPoint: Point2D(0.0, 10.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute2 -> {
+	startPoint: Point2D(0.0, 10.0);
+	endPoint: Point2D(0.0, 20.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute3 -> {
+	startPoint: Point2D(0.0, 20.0);
+	endPoint: Point2D(10.0, 20.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute4 -> {
+	startPoint: Point2D(10.0, 20.0);
+	endPoint: Point2D(10.0, 10.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute5 -> {
+	startPoint: Point2D(10.0, 10.0);
+	endPoint: Point2D(10.0, 0.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute6 -> {
+	startPoint: Point2D(10.0, 0.0);
+	endPoint: Point2D(20.0, 0.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute7 -> {
+	startPoint: Point2D(20.0, 0.0);
+	endPoint: Point2D(20.0, 10.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+CrossStraightLineGoal RoboticRoute8 -> {
+	startPoint: Point2D(20.0, 10.0);
+	endPoint: Point2D(20.0, 20.0);
+	timeConstraints: [FROM_GOAL_START(<600)];
+	tag: ENTER;
+}
+
+PolylineAreaGoal RoboticRouteGoBack -> {
+	points: [Point2D(20.0, 20.0), Point2D(20.0, 0.0), Point2D(0.0, 0.0)];
+	tag:ENTER;
+}
+
+ComplexGoal RoboticRoute -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(RoboticRoute1);
+	addGoal(RoboticRoute2);
+	addGoal(RoboticRoute3);
+	addGoal(RoboticRoute4);
+	addGoal(RoboticRoute5);
+	addGoal(RoboticRoute6);
+	addGoal(RoboticRoute7);
+	addGoal(RoboticRoute8);
+}
+
+/////////* Water the in-door Garden *//////////
+
+ComplexGoal WaterGarden -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(OpenWater);
+	addGoal(MixOrganics);
+	addGoal(RoboticRoute);
+	addGoal(CloseWater);
+	addGoal(RoboticRouteGoBack);	
+}
+
+///////////////* Once a day *////////////
+/////////////* Blank Until Now *////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,589 @@
+//////////////* Automation #1 *///////////////
+TopicMsgParamGoal GasRaised -> {
+	topic: "kitchen.gas";
+	condition: "gas" > 0.3;
+}
+
+TopicMsgParamGoal AlarmEnable -> {
+	topic: "alarm";
+	condition: "state" == 1;
+}
+
+////////* Thermostats Disasbled */////////////
+TopicMsgParamGoal ThermostatBathroomDisabled -> {
+	topic: "bathroom.thermostat";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal ThermostatKitchenDisabled -> {
+	topic: "kitchen.thermostat";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal ThermostatCorridorDisabled -> {
+	topic: "corridor.thermostat";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal ThermostatLivingRoomDisabled -> {
+	topic: "livingroom.thermostat";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal ThermostatBedroomDisabled -> {
+	topic: "bedroom.thermostat";
+	condition: "state" == 0;
+}
+
+//////////* Relays Disabled *//////////
+TopicMsgParamGoal RelaysKitchenDisabled -> {
+	topic: "kitchen.kitchen_relay";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal RelaysLivingRoomDisabled -> {
+	topic: "livingroom.tv_relay";
+	condition: "state" == 0;
+}
+
+//////////* Humidifiers Disable *///////////
+TopicMsgParamGoal HumidifierKichenDisabled -> {
+	topic: "kitchen.humidifier";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal HumidifierLivingRoomDisabled -> {
+	topic: "livingroom.humidifier";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal HumidifierBedroomDisabled -> {
+	topic: "bedroom.humidifier";
+	condition: "state" == 0;
+}
+
+TopicMsgParamGoal HumidifierBathroomDisabled -> {
+	topic: "bathroom.humidifier";
+	condition: "state" == 0;
+}
+
+//////////* Enable Alarm and Disable all thermostats, relays and humidifiers (concurrent) *////////////
+
+ComplexGoal GasGoal -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(AlarmEnable);
+	addGoal(ThermostatBathroomDisabled);
+	addGoal(ThermostatKitchenDisabled);
+	addGoal(ThermostatCorridorDisabled);
+	addGoal(ThermostatLivingRoomDisabled);
+	addGoal(ThermostatBedroomDisabled);
+	addGoal(RelaysKitchenDisabled);
+	addGoal(RelaysLivingRoomDisabled);
+	addGoal(HumidifierKichenDisabled);
+	addGoal(HumidifierLivingRoomDisabled);
+	addGoal(HumidifierBedroomDisabled);
+	addGoal(HumidifierBathroomDisabled);
+}
+
+////////* Automation #2 *///////
+
+///////////* Humidity Control Rooms (for 10 minutes) *//////////////
+TopicMsgParamGoal HumidityControlKitchen -> {
+	topic: "kitchen.humidity";
+	condition: ("humidity" > 0.5) OR ("humidity" < 0.3);
+	timeConstraints: [FROM_GOAL_START(<600)];
+}
+
+TopicMsgParamGoal HumidityControlLivingRoom -> {
+	topic: "livingroom.humidity";
+	condition: ("humidity" > 0.5) OR ("humidity" < 0.3);
+	timeConstraints: [FROM_GOAL_START(<600)];
+}
+
+TopicMsgParamGoal HumidityControlBedroom -> {
+	topic: "bedroom.humidity";
+	condition: ("humidity" > 0.5) OR ("humidity" < 0.3);
+	timeConstraints: [FROM_GOAL_START(<600)];
+}
+
+TopicMsgParamGoal HumidityControlBathroom -> {
+	topic: "bathroom.humidity";
+	condition: ("humidity" > 0.5) OR ("humidity" < 0.3);
+	timeConstraints: [FROM_GOAL_START(<600)];
+}
+///////* Enable Humidifiers *////////
+TopicMsgParamGoal HumidifierKichenEnabled -> {
+	topic: "kitchen.humidifier";
+	condition: "state" == 1;
+}
+
+TopicMsgParamGoal HumidifierLivingRoomEnabled -> {
+	topic: "livingroom.humidifier";
+	condition: "state" == 1;
+}
+
+TopicMsgParamGoal HumidifierBedroomEnabled -> {
+	topic: "bedroom.humidifier";
+	condition: "state" == 1;
+}
+
+TopicMsgParamGoal HumidifierBathroomEnabled -> {
+	topic: "bathroom.humidifier";
+	condition: "state" == 1;
+}
+
+/////////////* Check Humidity and Enable Humidifier if required *///////////////
+ComplexGoal KitchenHumidity -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumidityControlKitchen);
+	addGoal(HumidifierKichenEnabled);
+}
+
+ComplexGoal LivingRoomHumidity -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumidityControlLivingRoom);
+	addGoal(HumidifierLivingRoomEnabled);
+}
+
+ComplexGoal BedroomHumidity -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumidityControlBedroom);
+	addGoal(HumidifierBedroomEnabled);
+}
+
+ComplexGoal BathroomHumidity -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(HumidityControlBathroom);
+	addGoal(HumidifierBathroomEnabled);
+}
+
+
+////////////////* Automation #3 *///////////////////
+
+/* We will asume that house is 50by50 with following rooms: 
+LivingRoom: x:00.0 - 30.0, y:00.0 - 20.0
+Bedroom   : x:30.0 - 50.0, y:00.0 - 20.0
+Corridor  : x:00.0 - 50.0, y:20.0 - 30.0
+Bathroom  : x:00.0 - 20.0, y:30.0 - 50.0
+Kitchen   : x:20.0 - 50.0, y:30.0 - 50.0                 */
+
+//////////////* Enter Room *///////////////
+RectangleAreaGoal LivingRoom -> {
+	bottomLeftEdge: Point2D(0.0, 0.0);
+	lengthX: 30.0;
+	lengthY: 20.0;
+	tag: ENTER;
+}
+
+RectangleAreaGoal Bedroom -> {
+	bottomLeftEdge: Point2D(30.0, 0.0);
+	lengthX: 20.0;
+	lengthY: 20.0;
+	tag: ENTER;
+}
+
+RectangleAreaGoal Corridor -> {
+	bottomLeftEdge: Point2D(0.0, 20.0);
+	lengthX: 50.0;
+	lengthY: 10.0;
+	tag: ENTER;
+}
+
+RectangleAreaGoal Bathroom -> {
+	bottomLeftEdge: Point2D(0.0, 30.0);
+	lengthX: 20.0;
+	lengthY: 20.0;
+	tag: ENTER;
+}
+
+RectangleAreaGoal Kitchen -> {
+	bottomLeftEdge: Point2D(20.0, 30.0);
+	lengthX: 30.0;
+	lengthY: 20.0;
+	tag: ENTER;
+}
+
+////////////////* Leave Room *//////////////////
+RectangleAreaGoal LeaveLivingRoom -> {
+	bottomLeftEdge: Point2D(0.0, 0.0);
+	lengthX: 30.0;
+	lengthY: 20.0;
+	tag: EXIT;
+}
+
+RectangleAreaGoal LeaveBedroom -> {
+	bottomLeftEdge: Point2D(30.0, 0.0);
+	lengthX: 20.0;
+	lengthY: 20.0;
+	tag: EXIT;
+}
+
+RectangleAreaGoal LeaveCorridor -> {
+	bottomLeftEdge: Point2D(0.0, 20.0);
+	lengthX: 50.0;
+	lengthY: 10.0;
+	tag: EXIT;
+}
+
+RectangleAreaGoal LeaveBathroom -> {
+	bottomLeftEdge: Point2D(0.0, 30.0);
+	lengthX: 20.0;
+	lengthY: 20.0;
+	tag: EXIT;
+}
+
+RectangleAreaGoal LeaveKitchen -> {
+	bottomLeftEdge: Point2D(20.0, 30.0);
+	lengthX: 30.0;
+	lengthY: 20.0;
+	tag: EXIT;
+}
+
+
+/////////////////* Clean Floors *///////////////
+
+ComplexGoal CleanFloorLivingRoom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(LivingRoom);
+	addGoal(LeaveLivingRoom);
+	timeConstraints: [FROM_GOAL_START(>300), FROM_GOAL_START(<600)];
+}
+
+ComplexGoal CleanFloorBedroom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(Bedroom);
+	addGoal(LeaveBedroom);
+	timeConstraints: [FROM_GOAL_START(>120), FROM_GOAL_START(<300)];
+}
+
+ComplexGoal CleanFloorKitchen -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(Kitchen);
+	addGoal(LeaveKitchen);
+	timeConstraints: [FROM_GOAL_START(>300), FROM_GOAL_START(<660)];
+}
+
+ComplexGoal CleanFloorBathroom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(Bathroom);
+	addGoal(LeaveBathroom);
+	timeConstraints: [FROM_GOAL_START(>60), FROM_GOAL_START(<240)];
+}
+
+ComplexGoal CleanCorridor -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(Corridor);
+	addGoal(LeaveCorridor);
+}
+
+//////////* Clean House *//////////////
+ComplexGoal CleanHouse -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(CleanFloorLivingRoom);
+	addGoal(CleanCorridor);
+	addGoal(CleanFloorBedroom);
+	addGoal(CleanCorridor);
+	addGoal(CleanFloorKitchen);
+	addGoal(CleanCorridor);
+	addGoal(CleanFloorBathroom);
+	timeConstraints: [FROM_GOAL_START(<1800)];
+}
+
+/////////////* Automation #4 *///////////////
+
+
+/////////* Human Detect */////////////
+TopicMsgReceivedGoal HumanPresenceLivingRoom -> {
+	topic: "livingroom.human_detected";
+}
+
+TopicMsgReceivedGoal HumanPresenceKitchen -> {
+	topic: "kitchen.human_detected";
+}
+
+TopicMsgReceivedGoal HumanPresenceBedroom -> {
+	topic: "bedroom.human_detected";
+}
+
+//////////* Enable Thermostats *///////////
+TopicMsgParamGoal ThermostatLivingRoomEnabled -> {
+	topic: "livingroom.thermostat";
+	condition: "state" == 1;
+}
+
+TopicMsgParamGoal ThermostatKitchenEnabled -> {
+	topic: "kitchen.thermostat";
+	condition: "state" == 1;
+}
+
+
+TopicMsgParamGoal ThermostatBedroomEnabled -> {
+	topic: "bedroom.thermostat";
+	condition: "state" == 1;
+}
+
+//////////* Temperature Control With three consecutive changes Low-Hig-Low *//////////
+
+///////////* LivingRoom */////////////
+TopicMsgParamGoal TempLivingRoomHigh -> {
+	topic: "livingroom.temperature";
+	condition: "temperature" > 29.4;
+}
+
+TopicMsgParamGoal TempLivingRoomLow -> {
+	topic: "livingroom.temperature";
+	condition: "temperature" < 26.6;
+}
+
+ComplexGoal ControlLivingRoomHigh -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempLivingRoomHigh);
+	addGoal(ThermostatLivingRoomDisabled);
+}
+
+ComplexGoal ControlLivingRoomLow -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempLivingRoomLow);
+	addGoal(ThermostatLivingRoomEnabled);
+}
+
+ComplexGoal ControlLivingRoom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(ControlLivingRoomLow);
+	addGoal(ControlLivingRoomHigh);
+	addGoal(ControlLivingRoomLow);
+}
+///////////////* Kitchen */////////////
+TopicMsgParamGoal TempKitchenHigh -> {
+	topic: "kitchen.temperature";
+	condition: "temperature" > 29.4;
+}
+
+TopicMsgParamGoal TempKitchenLow -> {
+	topic: "kitchen.temperature";
+	condition: "temperature" < 26.6;
+}
+
+ComplexGoal ControlKitchenHigh -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempKitchenHigh);
+	addGoal(ThermostatKitchenDisabled);
+}
+
+ComplexGoal ControlKitchenLow -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempKitchenLow);
+	addGoal(ThermostatKitchenEnabled);
+}
+
+ComplexGoal ControlKitchen -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(ControlKitchenLow);
+	addGoal(ControlKitchenHigh);
+	addGoal(ControlKitchenLow);
+}
+
+/////////////* Bedroom *//////////////
+TopicMsgParamGoal TempBedroomHigh -> {
+	topic: "bedroom.temperature";
+	condition: "temperature" > 29.4;
+}
+
+TopicMsgParamGoal TempBedroomLow -> {
+	topic: "bedroom.temperature";
+	condition: "temperature" < 26.6;
+}
+
+ComplexGoal ControlBedroomHigh -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempBedroomHigh);
+	addGoal(ThermostatBedroomDisabled);
+}
+
+ComplexGoal ControlBedroomLow -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(TempBedroomLow);
+	addGoal(ThermostatBedroomEnabled);
+}
+
+ComplexGoal ControlBedroom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(ControlBedroomLow);
+	addGoal(ControlBedroomHigh);
+	addGoal(ControlBedroomLow);
+}
+
+//////////////* If human is detected Control Temperature * /////////
+ComplexGoal HumanLivingRoomDetected -> {
+	algorithm:ALL_ACCOMPLISHED;
+	addGoal(HumanPresenceLivingRoom);
+	addGoal(ControlLivingRoom);
+}
+
+ComplexGoal HumanKitchenDetected -> {
+	algorithm:ALL_ACCOMPLISHED;
+	addGoal(HumanPresenceKitchen);
+	addGoal(ControlKitchen);
+}
+
+ComplexGoal HumanBedroomDetected -> {
+	algorithm:ALL_ACCOMPLISHED;
+	addGoal(HumanPresenceBedroom);
+	addGoal(ControlBedroom);
+}
+
+
+/////////////* Automation #5 *///////////////
+
+///////////* Open all lights *//////////////
+TopicMsgParamGoal OpenLightsKitchen -> {
+	topic:"kitchen.light";
+	condition: (("red" == 255) AND ("green" == 255)) AND (("blue" == 255) AND ("intensity" == 1));
+}
+
+TopicMsgParamGoal OpenLightsLivingRoom -> {
+	topic:"livingroom.light";
+	condition: (("red" == 255) AND ("green" == 255)) AND (("blue" == 255) AND ("intensity" == 1));
+}
+
+TopicMsgParamGoal OpenLightsBedroom -> {
+	topic:"bedroom.light";
+	condition: (("red" == 255) AND ("green" == 255)) AND (("blue" == 255) AND ("intensity" == 1));
+}
+
+TopicMsgParamGoal OpenLightsBathroom -> {
+	topic:"bathroom.light";
+	condition: (("red" == 255) AND ("green" == 255)) AND (("blue" == 255) AND ("intensity" == 1));
+}
+
+ComplexGoal OpenAllLights -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(OpenLightsKitchen);
+	addGoal(OpenLightsLivingRoom);
+	addGoal(OpenLightsBedroom);
+	addGoal(OpenLightsBathroom);
+}
+
+//////////////* Blink all lights */////////////
+/* Mine doBlink == 1  makes intensity 0-1-0-1-0-1 to infinity */
+TopicMsgParamGoal KitchenBlink -> {
+	topic:"kitchen.light";
+	condition: "doBlink" == 1;
+}
+
+TopicMsgParamGoal LivingRoomBlink -> {
+	topic:"livingroom.light";
+	condition: "doBlink" == 1;
+}
+
+TopicMsgParamGoal BedroomBlink -> {
+	topic:"bedroom.light";
+	condition: "doBlink" == 1;
+}
+
+/////////////* Capture Photo *//////////
+/* Mine robot.camera.capture with state == 1 uploads photo to cloud when it is captured */
+TopicMsgParamGoal CapturePhoto -> {
+	topic: "robot.camera.capture";
+	condition: "state" == 1;
+} 
+
+
+////////////* Send Robot to intruder's room *//////////////
+ComplexGoal SendRobotLivingRoom -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(LivingRoom);
+	addGoal(CapturePhoto);
+}
+
+ComplexGoal SendRobotKitchen -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(Kitchen);
+	addGoal(CapturePhoto);
+}
+
+ComplexGoal SendRobotBedroom -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(Bedroom);
+	addGoal(CapturePhoto);
+}
+
+
+////////////* Open the TV *///////////
+TopicMsgParamGoal OpenTV -> {
+	topic: "livingroom.tv_relay";
+	condition: "state" == 1;
+}
+
+////////////* Start Playing "Seek & Destroy" *///////////
+TopicMsgParamGoal PlaySeekNdestroy -> {
+	topic: "livingroom.audio.play_from_youtube";
+	condition: "track_name" == "Seek & Destroy";
+}
+
+//////////* Detect Intruder *////////////////
+TopicMsgReceivedGoal IntruderPresenceLivingRoom -> {
+	topic: "livingroom.intruder_detected";
+}
+
+TopicMsgReceivedGoal IntruderPresenceKitchen -> {
+	topic: "kitchen.intruder_detected";
+}
+
+TopicMsgReceivedGoal IntruderPresenceBedroom -> {
+	topic: "bedroom.intruder_detected";
+}
+
+/////////* Complete Goal For Intruder in each room *//////////
+ComplexGoal Alltogether -> {
+	algorithm: ALL_ACCOMPLISHED;
+	addGoal(AlarmEnable);
+	addGoal(OpenAllLights);
+	addGoal(SendRobotLivingRoom);
+	addGoal(OpenTV);
+	addGoal(PlaySeekNdestroy);
+}
+
+ComplexGoal InLivingRoom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(IntruderPresenceLivingRoom);
+	addGoal(LivingRoomBlink);
+	addGoal(Alltogether);
+}
+
+ComplexGoal InKitchen -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(IntruderPresenceKitchen);
+	addGoal(KitchenBlink);
+	addGoal(Alltogether);
+}
+
+ComplexGoal InBedroom -> {
+	algorithm: ALL_ACCOMPLISHED_ORDERED;
+	addGoal(IntruderPresenceBedroom);
+	addGoal(BedroomBlink);
+	addGoal(Alltogether);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

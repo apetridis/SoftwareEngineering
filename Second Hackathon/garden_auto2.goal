@@ -1,0 +1,16 @@
+import garden.goal as garden;
+
+/////////* RedisBroker Initialize *////////////
+RedisBroker LocalRedis -> {
+	host: 'localhost';
+	port: 6379;
+	db: 0;
+	auth: AuthPlain('', '');
+}
+
+/////////* Water Garden */////////////
+Target MyAppTarget ->  {
+	goals: [garden.WaterGarden];
+	middleware: LocalRedis;
+	concurrent: False;
+}
